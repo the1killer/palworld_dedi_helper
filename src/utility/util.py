@@ -21,3 +21,15 @@ def kill_process(process_name: str) -> None:
     for p in psutil.process_iter():
         if p.name() == process_name:
             p.kill()
+
+def get_proc_memory(process_name: str) -> int:
+    """Returns the amount of memory in bytes the process is using"""
+    for p in psutil.process_iter():
+        if p.name() == process_name:
+            return p.memory_info().rss / 10
+    return 0
+
+def get_sys_memory_percent() -> float:
+    """Returns the percent of memory in use on the system"""
+    ram = psutil.virtual_memory()
+    return ram.percent

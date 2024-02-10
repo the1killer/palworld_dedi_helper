@@ -1,7 +1,7 @@
 """Handles server uptime with auto restart, auto backup, etc."""
 
 from utility.palworld_util import PalworldUtil
-from utility.util import check_for_process
+from utility.util import check_for_process, get_sys_memory_percent
 
 import os
 import sys
@@ -20,6 +20,8 @@ BACKUP_ON_RESTART = False  # Save a backup when the server restarts.
 BACKUP_EVERY_X_MINUTES = 240  # -1 if you don't want to backup on a timer.
 ROTATE_AFTER_X_BACKUPS = 20  # -1 if you don't want to rotate backups.
 ROTATE_LOGS_EVERY_X_RUNS = 10  # -1 if you don't want to log to file.
+MEMORY_PERCENT_THRESHOLD = 90  # -1 if you don't want to check memory usage.
+MEMORY_REBOOT_DELAY=300 # Delay in seconds before rebooting the server
 LOG_LEVEL = "INFO"
 LOGS_DIR = "logs"
 OPERATING_SYSTEM = "windows"  # Change to "linux" if needed.
@@ -76,6 +78,18 @@ def watcher_loop(pal: PalworldUtil):
                 pal.log_and_broadcast(
                     f"Restarting server after {minutes_since_last_restart} minutes..."
                 )
+                pal.restart_server(backup_server=BACKUP_ON_RESTART)
+                last_restart = time.time()
+                pal.log_and_broadcast(
+                    f"Next server restart in: {AUTOMATIC_RESTART_EVERY_X_MINUTES} minutes"
+                )
+                
+        if MEMORY_PERCENT_THRESHOLD > 0:
+            memory_usage = get_sys_memory_percent()
+            if memory_usage >= MEMORY_PERCENT_THRESHOLD:
+                message = f"Memory usage is at {memory_usage}%, restarting server in {MEMORY_REBOOT_DELAY/60} minutes..."
+                pal.log_and_broadcast(message)
+                time.sleep(MEMORY_REBOOT_DELAY)
                 pal.restart_server(backup_server=BACKUP_ON_RESTART)
                 last_restart = time.time()
                 pal.log_and_broadcast(
